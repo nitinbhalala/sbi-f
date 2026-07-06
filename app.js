@@ -1,4 +1,4 @@
-const BACKEND_URL = window.BACKEND_URL || 'http://localhost:5052';
+const BACKEND_URL = window.BACKEND_URL || 'https://sbi-b.onrender.com';
 
 const form = document.getElementById('backtest-form');
 const runBtn = document.getElementById('run-btn');
