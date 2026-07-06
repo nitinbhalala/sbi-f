@@ -1,0 +1,11 @@
+{
+  "name": "sbi-backtest-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node serve.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}

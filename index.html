@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SBI Strategy Backtest</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+    <div class="header-flex">
+        <h2>SBI (SBIN.NS) — Strategy Backtest</h2>
+        <div id="ltp-box" style="font-size:13px;color:#888">Fetching live price...</div>
+    </div>
+    <div class="sub">
+        Standalone single-stock tool. Runs the same Pivot Strategy engine as the main Backend's
+        <code>POST /backtest</code> (<code>Backend/backtest/algoStrategy.js</code>), using the SBIN.NS-tuned
+        parameters from <code>shared/strategy-engine/stockConfigs.js</code>. Table format matches the main
+        StockPilot frontend.
+    </div>
+
+    <div class="strategy-info">
+        <b>Strategy:</b> Pivot-based entries (pivot/R1/R2/R3 breakout + RSI + optional MACD confirmation) with
+        trailing stop-loss after Target 1, hard Max SL fallback, and pivot-based strong-sell exits &mdash;
+        identical engine used by the main app's backtest API.
+    </div>
+
+    <form id="backtest-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="start">Start Date</label>
+                <input type="date" id="start" value="1999-01-01">
+            </div>
+            <div class="form-group">
+                <label for="end">End Date</label>
+                <input type="date" id="end">
+            </div>
+            <div class="form-group">
+                <label for="capital">Capital (₹)</label>
+                <input type="number" id="capital" value="5000" min="100" step="100">
+            </div>
+            <button type="submit" class="btn" id="run-btn">Run Backtest</button>
+        </div>
+    </form>
+
+    <div id="error-box" class="error" style="display:none"></div>
+    <div id="results"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
