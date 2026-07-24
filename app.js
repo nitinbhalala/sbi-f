@@ -6,8 +6,6 @@ const errorBox = document.getElementById('error-box');
 const resultsEl = document.getElementById('results');
 const ltpBox = document.getElementById('ltp-box');
 
-document.getElementById('end').value = new Date().toISOString().split('T')[0];
-
 async function refreshLtp() {
     try {
         const res = await fetch(`${BACKEND_URL}/api/sbi/ltp`);
@@ -51,11 +49,14 @@ function exitTag(type) {
     return `<span class="tag ${cls}">${t}</span>`;
 }
 
-function renderSummary(r, ltp, optimized) {
+function renderSummary(r, ltp, optimized, windowStart, windowEnd, interval, intervalNote) {
     const c = r.data;
     const beats = c.algo_return > c.bh_return;
     const ltpNote = ltp
         ? ` | Live Price: ₹${ltp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (vs backtest end ₹${c.end_price.toLocaleString()})`
+        : '';
+    const windowNote = windowStart && windowEnd
+        ? ` | Window (${interval || '1m'}): ${windowStart} → ${windowEnd}`
         : '';
     const optimizedNote = optimized
         ? `<p style="font-size:11px;color:#8a5a00;background:#fff8e1;border:1px solid #ffe082;border-radius:4px;padding:6px 10px;margin-bottom:10px">
@@ -64,8 +65,14 @@ function renderSummary(r, ltp, optimized) {
              production config &mdash; a different date range may pick different parameters.
            </p>`
         : '';
+    const intervalBanner = intervalNote
+        ? `<p style="font-size:11px;color:#0d47a1;background:#e3f2fd;border:1px solid #90caf9;border-radius:4px;padding:6px 10px;margin-bottom:10px">
+             ℹ️ ${intervalNote}
+           </p>`
+        : '';
     return `
-    <h3>Results | Capital: ₹${c.initial_capital.toLocaleString()}${ltpNote}</h3>
+    <h3>Results | Capital: ₹${c.initial_capital.toLocaleString()}${ltpNote}${windowNote}</h3>
+    ${intervalBanner}
     ${optimizedNote}
     <div class="table-card">
     <table>
@@ -98,7 +105,10 @@ function renderSummary(r, ltp, optimized) {
         <b>Algo Final:</b> <span class="bold ${c.algo_profit >= 0 ? 'green' : 'red'}">₹${money(c.algo_final)}</span> |
         <b>Algo Profit:</b> <span class="${c.algo_profit >= 0 ? 'green' : 'red'}">₹${money(c.algo_profit)}</span> |
         <b>B&amp;H Final:</b> ₹${money(c.bh_final)} |
-        <b>B&amp;H Profit:</b> <span class="${c.bh_profit >= 0 ? 'green' : 'red'}">₹${money(c.bh_profit)}</span>
+        <b>B&amp;H Profit:</b> <span class="${c.bh_profit >= 0 ? 'green' : 'red'}">₹${money(c.bh_profit)}</span> |
+        <b>Winning Trades:</b> <span class="green bold">${c.winning_trades ?? 0}</span> |
+        <b>Losing Trades:</b> <span class="red bold">${c.losing_trades ?? 0}</span> |
+        <b>Win Rate:</b> ${c.win_rate ?? 0}%
     </div>`;
 }
 
@@ -167,18 +177,29 @@ form.addEventListener('submit', async (e) => {
     runBtn.disabled = true;
     runBtn.textContent = 'Running...';
 
+    const capital = document.getElementById('capital').value;
     const start = document.getElementById('start').value;
     const end = document.getElementById('end').value;
-    const capital = document.getElementById('capital').value;
 
     try {
-        const params = new URLSearchParams({ start, end, capital });
+        const paramObj = { capital };
+        if (start) paramObj.start = start;
+        if (end) paramObj.end = end;
+        const params = new URLSearchParams(paramObj);
         const res = await fetch(`${BACKEND_URL}/api/sbi/backtest?${params}`);
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Backtest failed.');
 
+        // Prefill on first load so the user sees a sensible default, but leave
+        // the pickers open to any date — the backend validates and returns a
+        // clear error if the pick falls outside what Yahoo actually has.
+        const startInput = document.getElementById('start');
+        const endInput = document.getElementById('end');
+        if (!startInput.value) startInput.value = json.dataAvailableFrom;
+        if (!endInput.value) endInput.value = json.dataAvailableTo;
+
         const r = json.results[0];
-        resultsEl.innerHTML = `<div class="detail-section">${renderSummary(r, json.ltp, json.optimized)}${renderTrades(r)}</div>`;
+        resultsEl.innerHTML = `<div class="detail-section">${renderSummary(r, json.ltp, json.optimized, json.windowStart, json.windowEnd, json.interval, json.intervalNote)}${renderTrades(r)}</div>`;
     } catch (err) {
         errorBox.textContent = err.message;
         errorBox.style.display = 'block';

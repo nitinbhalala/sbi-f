@@ -22,13 +22,15 @@
         <b>Strategy:</b> Pivot-based entries (pivot/R1/R2/R3 breakout + RSI + optional MACD confirmation) with
         trailing stop-loss after Target 1, hard Max SL fallback, and pivot-based strong-sell exits &mdash;
         identical engine used by the main app's backtest API.
+        <br><b>Interval: 1-minute candles.</b> Yahoo only serves 1-minute data for the trailing ~7 days, so the
+        date pickers below are limited to that window.
     </div>
 
     <form id="backtest-form">
         <div class="form-row">
             <div class="form-group">
                 <label for="start">Start Date</label>
-                <input type="date" id="start" value="1999-01-01">
+                <input type="date" id="start">
             </div>
             <div class="form-group">
                 <label for="end">End Date</label>
